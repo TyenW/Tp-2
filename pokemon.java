@@ -90,11 +90,7 @@ public class pokemon {
 
     public static ArrayList<pokemon> ler() {
         ArrayList<pokemon> lista = new ArrayList<>();
-<<<<<<< HEAD
         String caminho = "/tmp/pokemon.csv"; 
-=======
-        String caminho = "temp/pokemon.csv"; 
->>>>>>> 942218d1788c2dd3e60194cd4bfd89788c3c3362
         try (BufferedReader br = new BufferedReader(new FileReader(caminho))) {
             String linha = br.readLine(); 
             SimpleDateFormat formatoData = new SimpleDateFormat("dd/MM/yyyy");
@@ -160,10 +156,6 @@ public class pokemon {
         Scanner scan = new Scanner(System.in);
         ArrayList<pokemon> pokemons = ler();
         
-<<<<<<< HEAD
-=======
-        System.out.println("Digite o ID do Pokémon a buscar (ou 'FIM' para encerrar):");
->>>>>>> 942218d1788c2dd3e60194cd4bfd89788c3c3362
         String n = scan.nextLine();
 
         while (!n.equals("FIM")) {
@@ -172,13 +164,8 @@ public class pokemon {
                 num=num-1;
                 if (num >= 0 && num < pokemons.size()) {
                     pokemon p = pokemons.get(num);
-<<<<<<< HEAD
                     String tipos = p.getTipos().toString().replace("[", "['").replace("]", "']").replace(", ", "', '");
                     String habilidades = p.getHabilidades().toString().replace("[", "['").replace("]", "']").replace("\"", "").replace(", ", "', '");
-=======
-                    String tipos = p.getTipos().toString().replace(", ", ","); 
-                    String habilidades = p.getHabilidades().toString().replace(", ", ","); 
->>>>>>> 942218d1788c2dd3e60194cd4bfd89788c3c3362
                     String diaFormatado = new SimpleDateFormat("dd/MM/yyyy").format(p.getDia()); 
 
                     
@@ -197,12 +184,7 @@ public class pokemon {
                 System.out.println("Entrada inválida. Por favor, insira um número ou 'FIM' para encerrar.");
             }
 
-<<<<<<< HEAD
                 n = scan.nextLine();
-=======
-            System.out.println("Digite o ID do Pokémon a buscar (ou 'FIM' para encerrar):");
-            n = scan.nextLine();
->>>>>>> 942218d1788c2dd3e60194cd4bfd89788c3c3362
         }
 
         scan.close();
