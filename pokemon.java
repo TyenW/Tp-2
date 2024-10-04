@@ -90,7 +90,7 @@ public class pokemon {
 
     public static ArrayList<pokemon> ler() {
         ArrayList<pokemon> lista = new ArrayList<>();
-        String caminho = "/tmp/pokemon.csv"; 
+        String caminho = "C:\\Users\\Pedro Guimarães\\Desktop\\Codigos\\Tp 2\\pokemon.csv"; 
         try (BufferedReader br = new BufferedReader(new FileReader(caminho))) {
             String linha = br.readLine(); 
             SimpleDateFormat formatoData = new SimpleDateFormat("dd/MM/yyyy");
