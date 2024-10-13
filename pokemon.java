@@ -3,7 +3,9 @@ import java.util.Date;
 import java.util.Scanner;
 import java.io.BufferedReader;
 import java.io.FileReader;
+import java.io.FileWriter;
 import java.io.IOException;
+import java.io.PrintWriter;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 
@@ -19,6 +21,10 @@ public class pokemon {
     private int chanceCaptura; 
     private boolean lendario;
     private Date dia;
+
+   
+
+
      
     public void setHabilidades(ArrayList<String> habilidades) {
         this.habilidades = habilidades;
@@ -53,7 +59,6 @@ public class pokemon {
     public void setTipos(ArrayList<String> tipos) {
         this.tipos = tipos;
     }
-    
     public ArrayList<String> getHabilidades() {
         return habilidades;
     }
@@ -87,7 +92,9 @@ public class pokemon {
     public boolean isLendario() {
         return lendario;
     }
+    
 
+    
     public pokemon(int id, int geracao, String nome, String descricao, ArrayList<String> tipos, 
                ArrayList<String> habilidades, double peso, double altura, 
                int chanceCaptura, boolean lendario, Date dia) {
@@ -103,10 +110,39 @@ public class pokemon {
     this.lendario = lendario;
     this.dia = dia;
 }
+public static ArrayList<pokemon> inserirOrdenado(ArrayList<pokemon> lista, pokemon novoPokemon, String matricula) {
+    // Adiciona o novo Pokémon ao final da lista
+    lista.add(novoPokemon);
 
+    // Algoritmo de inserção para ordenar a lista
+    int i = lista.size() - 2; // Começa a partir do penúltimo item
+    // Move os elementos que são posteriores ao novoPokémon
+    while (i >= 0 && lista.get(i).getDia().after(novoPokemon.getDia())) {
+        lista.set(i + 1, lista.get(i)); // Move o Pokémon para a posição seguinte
+        i--;
+    }
+
+    // Coloca o novo Pokémon na posição correta
+    lista.set(i + 1, novoPokemon); 
+
+    // Registra no log
+    registrarLog(matricula, novoPokemon);
+
+    return lista;
+}
+
+
+  public static void registrarLog(String matricula, pokemon poke) {
+        try (PrintWriter out = new PrintWriter(new FileWriter(matricula + "_insercao.txt", true))) {
+            String captureDateFormatada = new SimpleDateFormat("dd/MM/yyyy").format(poke.getDia());
+            out.println("Inserido Pokémon: ID " + poke.id + ", Nome: " + poke.nome + ", Data de Captura: " + captureDateFormatada);
+        } catch (IOException e) {
+            System.out.println("Erro ao escrever no arquivo de log: " + e.getMessage());
+        }
+    }
     public static ArrayList<pokemon> ler() {
         ArrayList<pokemon> lista = new ArrayList<>();
-        String caminho = "/tmp/pokemon.csv"; 
+        String caminho = "C:\\Users\\Usuário\\Desktop\\Codigos\\Tp-2\\pokemon.csv"; 
         try (BufferedReader br = new BufferedReader(new FileReader(caminho))) {
             String linha = br.readLine(); 
             SimpleDateFormat formatoData = new SimpleDateFormat("dd/MM/yyyy");
@@ -153,21 +189,18 @@ public class pokemon {
     }
 
     // Método exibir que substitui o print no maiSn
-    public static void exibir(ArrayList<pokemon> pokemons, int num) {
-        if (num >= 0 && num < pokemons.size()) {
-            pokemon p = pokemons.get(num);
-            String tipos = p.getTipos().toString().replace("[", "['").replace("]", "']").replace(", ", "', '");
-            String habilidades = p.getHabilidades().toString().replace("[", "['").replace("]", "']").replace("\"", "").replace(", ", "', '");
-            String diaFormatado = new SimpleDateFormat("dd/MM/yyyy").format(p.getDia()); 
-
-            String saida = String.format(
-                "[#%d -> %s: %s - %s - %s - %.1fkg - %.1fm - %d%% - %b - %d gen] - %s",
-                p.getId(), p.getNome(), p.getDescricao(), tipos, habilidades,
-                p.getPeso(), p.getAltura(), p.getChanceCaptura(), p.isLendario(), p.getGeracao(),
-                diaFormatado
-            );
-            System.out.println(saida);
-        } 
+    public void exibir() {
+        String tipos = this.getTipos().toString().replace("[", "['").replace("]", "']").replace(", ", "', '");
+        String habilidades = this.getHabilidades().toString().replace("[", "['").replace("]", "']").replace("\"", "").replace(", ", "', '");
+        String diaFormatado = new SimpleDateFormat("dd/MM/yyyy").format(this.getDia()); 
+    
+        String saida = String.format(
+            "[#%d -> %s: %s - %s - %s - %.1fkg - %.1fm - %d%% - %b - %d gen] - %s",
+            this.getId(), this.getNome(), this.getDescricao(), tipos, habilidades,
+            this.getPeso(), this.getAltura(), this.getChanceCaptura(), this.isLendario(), this.getGeracao(),
+            diaFormatado
+        );
+        System.out.println(saida);
     }
 
     // Métodos de pesquisa
@@ -199,7 +232,6 @@ public class pokemon {
         return -1; // Retorna -1 se não encontrar
     }
 
-    // Método clone
     public static pokemon clone(ArrayList<pokemon> pokemons, int indice) {
         if (indice >= 0 && indice < pokemons.size()) {
             // Retorna uma nova instância de Pokemon com os mesmos dados
@@ -223,39 +255,49 @@ public class pokemon {
             return null; // Retorna null se o índice for inválido
         }
     }
-
+    public static ArrayList<pokemon> ordenarPorNome(ArrayList<pokemon> lista) {
+        lista.sort((p1, p2) -> p1.getNome().compareToIgnoreCase(p2.getNome()));
+        return lista;
+    }
     public static void main(String[] args) {
         Scanner scan = new Scanner(System.in);
-        ArrayList<pokemon> pokemons = ler();
-        ArrayList<pokemon> selctpokemons = new ArrayList<>(); // Inicializando a lista
+        ArrayList<pokemon> pokemons = ler(); // Função que lê os Pokémon de um arquivo
+        ArrayList<pokemon> selctpokemons = new ArrayList<>(); // Lista para armazenar os selecionados
+        
+        String matricula = scan.nextLine(); // Pega a matrícula do usuário
+    
+        // Ler a primeira entrada de número diretamente antes do loop
         String n = scan.nextLine();
-        String nome;
+        
         while (!n.equalsIgnoreCase("FIM")) {
             try {
-                int num = Integer.parseInt(n) - 1;  // Ajustando para índice zero
-                pokemon clonedPokemon = clone(pokemons, num);
-                if (clonedPokemon != null) { // Verificando se o clone não é nulo
-                    selctpokemons.add(clonedPokemon);
+                int num = Integer.parseInt(n) - 1; // Ajuste para zero-based indexing
+                if (num >= 0 && num <= pokemons.size()) { // Verifica se o índice é válido
+                    pokemon clonedPokemon = clone(pokemons, num); // Clona o Pokémon original
+                    if (clonedPokemon != null) {
+                        // Insere o Pokémon na lista de forma ordenada
+                        selctpokemons = inserirOrdenado(selctpokemons, clonedPokemon, matricula);
+                        System.out.println("Pokémon inserido: " + clonedPokemon.getNome()); // Confirma a inserção
+                    } else {
+                        System.out.println("Pokémon não encontrado para o número: " + n);
+                    }
+                } else {
+                    System.out.println("Número inválido: " + n);
                 }
             } catch (NumberFormatException e) {
                 System.out.println("Entrada inválida. Por favor, insira um número ou 'FIM' para encerrar.");
             }
-    
+            
+            // Lê a próxima entrada de número
             n = scan.nextLine();
         }
-        int ids;
-        nome =scan.nextLine();
-        while(!nome.equalsIgnoreCase("FIM")){
-          ids=pesquisarPorNome(selctpokemons, nome);
-            if(ids!=-1){
-                System.out.println("SIM");
-            }
-            else{
-                System.out.println("NAO");
-            }
-            nome =scan.nextLine();
+    
+        // Exibe os Pokémon ordenados
+        for (pokemon poke : selctpokemons) {
+            poke.exibir();
         }
     
         scan.close();
     }
-}    
+}
+   
