@@ -1,9 +1,9 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <time.h>
+#include <ctype.h>
+#include <stdbool.h>
 
-// Inclua o arquivo com a definição da struct diretamente no código principal
 typedef struct {
     char show_id[50];
     char type[20];
@@ -12,7 +12,7 @@ typedef struct {
     char **cast;
     int cast_count;
     char country[50];
-    struct tm date_added;
+    int time[3]; // time[0] = dia, time[1] = mês, time[2] = ano
     int release_year;
     char rating[10];
     char duration[20];
@@ -20,139 +20,150 @@ typedef struct {
     int listed_in_count;
 } Disney;
 
-#define MAX_LINE_LENGTH 1024
+Disney lista[1368];
+int total = 0;
 
-// Função para dividir uma string em tokens com base em um delimitador, respeitando aspas
-char **split_csv_line(const char *line, int *count) {
-    char **result = NULL;
-    *count = 0;
-
-    const char *start = line;
-    char *token = NULL;
-    int in_quotes = 0;
-
-    while (*line) {
-        if (*line == '"') {
-            in_quotes = !in_quotes; // Alterna o estado de dentro/fora de aspas
-        } else if (*line == ',' && !in_quotes) {
-            token = strndup(start, line - start);
-            result = realloc(result, sizeof(char *) * (*count + 1));
-            result[*count] = token;
-            (*count)++;
-            start = line + 1;
-        }
-        line++;
-    }
-
-    // Adiciona o último token
-    token = strndup(start, line - start);
-    result = realloc(result, sizeof(char *) * (*count + 1));
-    result[*count] = token;
-    (*count)++;
-
-    return result;
-}
-
-// Função para converter uma string de data no formato "Mês Dia, Ano" para struct tm
-struct tm parse_date(const char *date_str) {
-    struct tm date = {0};
-    char month[20];
-    int day, year;
-
-    if (sscanf(date_str, "%s %d, %d", month, &day, &year) == 3) {
-        char *months[] = {"January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"};
-        for (int i = 0; i < 12; i++) {
-            if (strcmp(month, months[i]) == 0) {
-                date.tm_mon = i;
-                break;
-            }
-        }
-        date.tm_mday = day;
-        date.tm_year = year - 1900;
-    }
-
-    return date;
-}
-
-// Função para ler o arquivo CSV e preencher a struct Disney
-Disney *read_disney_csv(const char *filename, int *count) {
+void ler_csv(const char *filename) {
     FILE *file = fopen(filename, "r");
     if (!file) {
-        perror("Erro ao abrir o arquivo. Verifique se o caminho e o nome do arquivo estão corretos.");
-        return NULL;
+        perror("Erro ao abrir o arquivo");
+        return;
     }
 
-    char line[MAX_LINE_LENGTH];
-    fgets(line, MAX_LINE_LENGTH, file); // Ignorar o cabeçalho
+    char line[1024];
+    fgets(line, sizeof(line), file); // Ignora o cabeçalho
 
-    Disney *shows = NULL;
-    *count = 0;
+    while (fgets(line, sizeof(line), file)) {
+        char *tokens[20]; // Array para armazenar os campos da linha
+        int token_count = 0;
 
-    while (fgets(line, MAX_LINE_LENGTH, file)) {
-        shows = realloc(shows, sizeof(Disney) * (*count + 1));
-        Disney *current = &shows[*count];
-
-        int field_count;
-        char **fields = split_csv_line(line, &field_count);
-
-        strcpy(current->show_id, fields[0]);
-        strcpy(current->type, fields[1]);
-        strcpy(current->title, fields[2]);
-        strcpy(current->director, fields[3] ? fields[3] : "");
-        current->cast = split_csv_line(fields[4] ? fields[4] : "", &current->cast_count);
-        strcpy(current->country, fields[5] ? fields[5] : "");
-        current->date_added = parse_date(fields[6] ? fields[6] : "");
-        current->release_year = atoi(fields[7] ? fields[7] : "0");
-        strcpy(current->rating, fields[8] ? fields[8] : "");
-        strcpy(current->duration, fields[9] ? fields[9] : "");
-        current->listed_in = split_csv_line(fields[10] ? fields[10] : "", &current->listed_in_count);
-
-        for (int i = 0; i < field_count; i++) {
-            free(fields[i]);
+        // Divide a linha em campos, considerando aspas
+        char *start = line;
+        while (*start) {
+            if (*start == '"') {
+                start++;
+                char *end = strchr(start, '"');
+                if (end) {
+                    *end = '\0';
+                    tokens[token_count++] = start;
+                    start = end + 1;
+                }
+            } else {
+                char *end = strpbrk(start, ",\n");
+                if (end) {
+                    *end = '\0';
+                    tokens[token_count++] = start;
+                    start = end + 1;
+                } else {
+                    tokens[token_count++] = start;
+                    break;
+                }
+            }
+            if (*start == ',') start++;
         }
-        free(fields);
 
-        (*count)++;
+        // Lê os campos básicos
+        if (token_count > 0) strcpy(lista[total].show_id, tokens[0]);
+        if (token_count > 1) strcpy(lista[total].type, tokens[1]);
+        if (token_count > 2) strcpy(lista[total].title, tokens[2]);
+        if (token_count > 3) strcpy(lista[total].director, tokens[3]);
+
+        // Processa o elenco
+        if (token_count > 4 && tokens[4][0] != '\0') {
+            lista[total].cast_count = 0;
+            lista[total].cast = malloc(sizeof(char *) * 50);
+            if (!lista[total].cast) {
+                perror("Erro ao alocar memória para elenco");
+                exit(EXIT_FAILURE);
+            }
+            char *cast_token = strtok(tokens[4], ",");
+            while (cast_token) {
+                lista[total].cast[lista[total].cast_count] = strdup(cast_token);
+                lista[total].cast_count++;
+                cast_token = strtok(NULL, ",");
+            }
+        } else {
+            lista[total].cast_count = 0;
+            lista[total].cast = NULL;
+        }
+
+        if (token_count > 5) strcpy(lista[total].country, tokens[5]);
+
+        // Lê a data
+        if (token_count > 6) sscanf(tokens[6], "%d/%d/%d", &lista[total].time[0], &lista[total].time[1], &lista[total].time[2]);
+
+        if (token_count > 7) lista[total].release_year = atoi(tokens[7]);
+        if (token_count > 8) strcpy(lista[total].rating, tokens[8]);
+        if (token_count > 9) strcpy(lista[total].duration, tokens[9]);
+
+        // Processa as categorias
+        if (token_count > 10 && tokens[10][0] != '\0') {
+            lista[total].listed_in_count = 0;
+            lista[total].listed_in = malloc(sizeof(char *) * 50);
+            if (!lista[total].listed_in) {
+                perror("Erro ao alocar memória para categorias");
+                exit(EXIT_FAILURE);
+            }
+            char *category_token = strtok(tokens[10], ",");
+            while (category_token) {
+                lista[total].listed_in[lista[total].listed_in_count] = strdup(category_token);
+                lista[total].listed_in_count++;
+                category_token = strtok(NULL, ",");
+            }
+        } else {
+            lista[total].listed_in_count = 0;
+            lista[total].listed_in = NULL;
+        }
+
+        total++;
     }
-
     fclose(file);
-    return shows;
 }
-
-// Função para liberar a memória alocada para a struct Disney
-void free_disney(Disney *shows, int count) {
-    for (int i = 0; i < count; i++) {
-        for (int j = 0; j < shows[i].cast_count; j++) {
-            free(shows[i].cast[j]);
+void imprimir_dados() {
+    for (int i = 0; i < total; i++) {
+        printf("[=> %s ## ", lista[i].show_id); // Imprime o ID do show
+        printf("%s ## ", lista[i].type); // Imprime o tipo do show
+        printf("%s ## ", lista[i].title); // Imprime o título do show
+        printf("%s ## ", (strlen(lista[i].director) == 0 ? "NaN" : lista[i].director)); // Imprime o diretor ou "NaN" se vazio
+        printf("[");
+        for (int j = 0; j < lista[i].cast_count; j++) {
+            printf("%s%s", lista[i].cast[j], (j < lista[i].cast_count - 1) ? ", " : ""); // Imprime o elenco
         }
-        free(shows[i].cast);
-
-        for (int j = 0; j < shows[i].listed_in_count; j++) {
-            free(shows[i].listed_in[j]);
+        printf("] ## ");
+        printf("%s ## ", (strlen(lista[i].country) == 0 ? "NaN" : lista[i].country)); // Imprime o país ou "NaN" se vazio
+        if (lista[i].time[0] == 0 && lista[i].time[1] == 0 && lista[i].time[2] == 0) {
+            printf("NaN ## "); // Imprime "NaN" se a data for inválida
+        } else {
+            printf("%02d/%02d/%04d ## ", lista[i].time[0], lista[i].time[1], lista[i].time[2]); // Imprime a data
         }
-        free(shows[i].listed_in);
+        printf("%d ## ", lista[i].release_year); // Imprime o ano de lançamento
+        printf("%s ## ", (strlen(lista[i].rating) == 0 ? "NaN" : lista[i].rating)); // Imprime a classificação indicativa ou "NaN" se vazio
+        printf("%s ## ", lista[i].duration); // Imprime a duração
+        printf("[");
+        for (int j = 0; j < lista[i].listed_in_count; j++) {
+            printf("%s%s", lista[i].listed_in[j], (j < lista[i].listed_in_count - 1) ? ", " : ""); // Imprime os gêneros
+        }
+        printf("]\n");
     }
-    free(shows);
 }
 
 int main() {
-    int count;
-    Disney *shows = read_disney_csv("disneyplus.csv", &count);
+    printf("Lendo dados do arquivo...\n");
+    ler_csv("disneyplus.csv");
+    printf("Dados lidos com sucesso!\n\n");
+    imprimir_dados();
+    printf("Total de filmes lidos: %d\n", total);
 
-    if (shows) {
-        for (int i = 0; i < count; i++) {
-            printf("Show ID: %s\n", shows[i].show_id);
-            printf("Title: %s\n", shows[i].title);
-            printf("Type: %s\n", shows[i].type);
-            printf("Director: %s\n", shows[i].director);
-            printf("Release Year: %d\n", shows[i].release_year);
-            printf("Rating: %s\n", shows[i].rating);
-            printf("Duration: %s\n", shows[i].duration);
-            printf("\n");
+    // Libera a memória alocada
+    for (int i = 0; i < total; i++) {
+        for (int j = 0; j < lista[i].cast_count; j++) {
+            free(lista[i].cast[j]);
         }
-
-        free_disney(shows, count);
+        free(lista[i].cast);
+        for (int j = 0; j < lista[i].listed_in_count; j++) {
+            free(lista[i].listed_in[j]);
+        }
+        free(lista[i].listed_in);
     }
-
     return 0;
 }

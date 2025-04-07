@@ -8,7 +8,7 @@ class Disney {
     private String show_id; // Identificador único do show
     private String title; // Título do show
     private String type; // Tipo do show (ex: Filme, Série)
-    private String director; // Nome do diretor
+    private String director; // Nomes do diretores
     private String[] cast; // Lista de atores
     private String country; // País de origem
     private Date date_added; // Data em que foi adicionado ao catálogo
@@ -135,7 +135,7 @@ class Disney {
     // Método para imprimir os objetos Disney
     static void imprimir(Disney[] disney) {
         for (Disney d : disney) {
-            System.out.print("=> " + d.getShow_id() + " ## "); // Imprime o ID do show
+            System.out.print("[=> " + d.getShow_id() + " ## "); // Imprime o ID do show
             System.out.print(d.getType() + " ## "); // Imprime o tipo do show
             System.out.print(d.getTitle() + " ## "); // Imprime o título do show
             System.out.print((d.getDirector() == null || d.getDirector().isEmpty() ? "NaN" : d.getDirector()) + " ## "); // Imprime o diretor ou "NaN" se vazio
@@ -145,7 +145,7 @@ class Disney {
             System.out.print(d.getRelease_year() + " ## "); // Imprime o ano de lançamento
             System.out.print((d.getRating() == null || d.getRating().isEmpty() ? "NaN" : d.getRating()) + " ## "); // Imprime a classificação indicativa ou "NaN" se vazio
             System.out.print(d.getDuration() + " ## "); // Imprime a duração
-            System.out.println(Arrays.toString(d.getListed_in())); // Imprime os gêneros
+            System.out.println(Arrays.toString(d.getListed_in())+"]"); // Imprime os gêneros
         }
     }
 
@@ -221,6 +221,7 @@ class Disney {
 
         Disney[] disney = disneyInstance.ler(); // Chama o método ler para ler o arquivo CSV e atribui o resultado
         disney = Arrays.stream(disney).filter(Objects::nonNull).toArray(Disney[]::new); // Remove elementos nulos do array
+        disney = ordenarPorId(disney); // Ordena o array por ID
         imprimir(disney); // Chama o método imprimir para exibir os objetos Disney
     }
 
@@ -230,160 +231,24 @@ class Disney {
     
     //Método que ordena por Id 
     public static Disney[] ordenarPorId(Disney[] disney) {
-        for (int i = 0; i < disney.length - 1; i++) {
-            for (int j = 0; j < disney.length - i - 1; j++) {
-            if (disney[j].getShow_id().compareTo(disney[j + 1].getShow_id()) > 0) {
-                // Troca os elementos de posição
-                Disney temp = disney[j];
-                disney[j] = disney[j + 1];
-                disney[j + 1] = temp;
-            }
-            }
-        }
-        return disney; // Retorna o array ordenado
-    }
-
-    // Método que ordena por Titulo
-    public static Disney[] ordenarPorTitulo(Disney[] disney) {
-        for (int i = 0; i < disney.length - 1; i++) {
-            for (int j = 0; j < disney.length - i - 1; j++) {
-                if (disney[j].getTitle().compareTo(disney[j + 1].getTitle()) > 0) {
-                    // Troca os elementos de posição
-                    Disney temp = disney[j];
-                    disney[j] = disney[j + 1];
-                    disney[j + 1] = temp;
+        String id1, id2; // Variáveis para armazenar os IDs dos objetos Disney
+        for (int i = 0; i < disney.length - 1; i++) { // Loop externo para percorrer o array
+            for (int j = 0; j < disney.length - 1 - i; j++) { // Loop interno para comparar os elementos adjacentes
+                id1 = disney[j].getShow_id(); // Obtém o ID do objeto atual
+                id2 = disney[j + 1].getShow_id(); // Obtém o ID do próximo objeto
+                id1 = id1.replaceAll("s","");
+                id2 = id2.replaceAll("s",""); // Remove o caractere "s" dos IDs para comparação
+                int id1Int = Integer.parseInt(id1); // Converte o ID atual para inteiro
+                int id2Int = Integer.parseInt(id2); // Converte o próximo ID para inteiro
+                // Compara os IDs e troca os objetos se necessário
+                if (id1Int > id2Int) {
+                    Disney temp = disney[j].clone(); // Armazena o objeto atual em uma variável temporária
+                    disney[j] = disney[j + 1].clone(); // Troca o objeto atual com o próximo
+                    disney[j + 1] = temp.clone(); // Colo   ca o objeto armazenado na posição correta
                 }
             }
         }
         return disney; // Retorna o array ordenado
     }
-
-    // Método que ordena por Tipo
-    public static Disney[] ordenarPorTipo(Disney[] disney) {
-        for (int i = 0; i < disney.length - 1; i++) {
-            for (int j = 0; j < disney.length - i - 1; j++) {
-                if (disney[j].getType().compareTo(disney[j + 1].getType()) > 0) {
-                    // Troca os elementos de posição
-                    Disney temp = disney[j];
-                    disney[j] = disney[j + 1];
-                    disney[j + 1] = temp;
-                }
-            }
-        }
-        return disney; // Retorna o array ordenado
-    }
-    // Método que ordena por Diretor
-    public static Disney[] ordenarPorDiretor(Disney[] disney) {
-        for (int i = 0; i < disney.length - 1; i++) {
-            for (int j = 0; j < disney.length - i - 1; j++) {
-                if (disney[j].getDirector().compareTo(disney[j + 1].getDirector()) > 0) {
-                    // Troca os elementos de posição
-                    Disney temp = disney[j];
-                    disney[j] = disney[j + 1];
-                    disney[j + 1] = temp;
-                }
-            }
-        }
-        return disney; // Retorna o array ordenado
-    }
-    // Método que ordena por País
-    public static Disney[] ordenarPorPais(Disney[] disney) {
-        for (int i = 0; i < disney.length - 1; i++) {
-            for (int j = 0; j < disney.length - i - 1; j++) {
-                if (disney[j].getCountry().compareTo(disney[j + 1].getCountry()) > 0) {
-                    // Troca os elementos de posição
-                    Disney temp = disney[j];
-                    disney[j] = disney[j + 1];
-                    disney[j + 1] = temp;
-                }
-            }
-        }
-        return disney; // Retorna o array ordenado
-    }
-    // Método que ordena por Data
-    public static Disney[] ordenarPorData(Disney[] disney) {
-        for (int i = 0; i < disney.length - 1; i++) {
-            for (int j = 0; j < disney.length - i - 1; j++) {
-                if (disney[j].getDate_added().compareTo(disney[j + 1].getDate_added()) > 0) {
-                    // Troca os elementos de posição
-                    Disney temp = disney[j];
-                    disney[j] = disney[j + 1];
-                    disney[j + 1] = temp;
-                }
-            }
-        }
-        return disney; // Retorna o array ordenado
-    }
-    // Método que ordena por Ano de Lançamento
-    public static Disney[] ordenarPorAno(Disney[] disney) {
-        for (int i = 0; i < disney.length - 1; i++) {
-            for (int j = 0; j < disney.length - i - 1; j++) {
-                if (disney[j].getRelease_year() > disney[j + 1].getRelease_year()) {
-                    // Troca os elementos de posição
-                    Disney temp = disney[j];
-                    disney[j] = disney[j + 1];
-                    disney[j + 1] = temp;
-                }
-            }
-        }
-        return disney; // Retorna o array ordenado
-    }
-    // Método que ordena por Classificação
-    public static Disney[] ordenarPorClassificacao(Disney[] disney) {
-        for (int i = 0; i < disney.length - 1; i++) {
-            for (int j = 0; j < disney.length - i - 1; j++) {
-                if (disney[j].getRating().compareTo(disney[j + 1].getRating()) > 0) {
-                    // Troca os elementos de posição
-                    Disney temp = disney[j];
-                    disney[j] = disney[j + 1];
-                    disney[j + 1] = temp;
-                }
-            }
-        }
-        return disney; // Retorna o array ordenado
-    }
-    // Método que ordena por Duração
-    public static Disney[] ordenarPorDuracao(Disney[] disney) {
-        for (int i = 0; i < disney.length - 1; i++) {
-            for (int j = 0; j < disney.length - i - 1; j++) {
-                if (disney[j].getDuration().compareTo(disney[j + 1].getDuration()) > 0) {
-                    // Troca os elementos de posição
-                    Disney temp = disney[j];
-                    disney[j] = disney[j + 1];
-                    disney[j + 1] = temp;
-                }
-            }
-        }
-        return disney; // Retorna o array ordenado
-    }
-    // Método que ordena por Gênero
-    public static Disney[] ordenarPorGenero(Disney[] disney) {
-        for (int i = 0; i < disney.length - 1; i++) {
-            for (int j = 0; j < disney.length - i - 1; j++) {
-                if (disney[j].getListed_in()[0].compareTo(disney[j + 1].getListed_in()[0]) > 0) {
-                    // Troca os elementos de posição
-                    Disney temp = disney[j];
-                    disney[j] = disney[j + 1];
-                    disney[j + 1] = temp;
-                }
-            }
-        }
-        return disney; // Retorna o array ordenado
-    }
-    // Método que ordena por Elenco
-    public static Disney[] ordenarPorElenco(Disney[] disney) {
-        for (int i = 0; i < disney.length - 1; i++) {
-            for (int j = 0; j < disney.length - i - 1; j++) {
-                if (disney[j].getCast()[0].compareTo(disney[j + 1].getCast()[0]) > 0) {
-                    // Troca os elementos de posição
-                    Disney temp = disney[j];
-                    disney[j] = disney[j + 1];
-                    disney[j + 1] = temp;
-                }
-            }
-        }
-        return disney; // Retorna o array ordenado
-    }
-    
 
 }
