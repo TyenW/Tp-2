@@ -23,147 +23,135 @@ typedef struct {
 Disney lista[1368];
 int total = 0;
 
-void ler_csv(const char *filename) {
-    FILE *file = fopen(filename, "r");
-    if (!file) {
-        perror("Erro ao abrir o arquivo");
-        return;
-    }
+void ler_csv(char line[1000]){
+    int i=0;
+    char tmp[500];
+    sscanf(line + i, "%[^,],", lista[total].show_id);
+    i += strlen(lista[total].show_id) + 1;
+    printf("%s\n", lista[total].show_id);
+    // Lê o tipo do show
+    sscanf(line + i, "%[^,],", lista[total].type);
+    i += strlen(lista[total].type) + 1;
+    printf("%s\n", lista[total].type);
+    
+    while (i < strlen(line)) {
+       
 
-    char line[1024];
-    fgets(line, sizeof(line), file); // Ignora o cabeçalho
+        // Lê o título do show
 
-    while (fgets(line, sizeof(line), file)) {
-        char *tokens[20]; // Array para armazenar os campos da linha
-        int token_count = 0;
+        if(i== '"'){
+            int z=0;
+            while ((line[z]!= '"'&& line[z+1] != ',')) {
+                tmp[z] = line[i + z];
+                z++;
+            }
+            tmp[z] = '\0';
+             i+=z+2;
+            strcpy(lista[total].title, tmp);
+           
+            
+        }
+        else{
+            sscanf(line + i, "%[^,],", lista[total].title);
+            i += strlen(lista[total].title) + 1;
+        }   
+        if (line[i] == ',')
+        {
+            lista[total].director[0] = '\0';
+            i++;
+        }
+        else if(line[i]== '"'){
+            int z=0;
+            while ((line[z]!= '"'&& line[z+1] != ',')) {
+                tmp[z] = line[i + z];
+                z++;
+            }
+            tmp[z] = '\0';
+             i+=z+2;
+            // Divide os diretores separados por vírgula e ordena
+            char *diretores[100];
+            int count = 0;
+            char *token = strtok(tmp, ",");
+            while (token != NULL) {
+                diretores[count++] = token;
+                token = strtok(NULL, ",");
+            }
 
-        // Divide a linha em campos, considerando aspas
-        char *start = line;
-        while (*start) {
-            if (*start == '"') {
-                start++;
-                char *end = strchr(start, '"');
-                if (end) {
-                    *end = '\0';
-                    tokens[token_count++] = start;
-                    start = end + 1;
+            // Ordena os diretores em ordem alfabética
+            for (int x = 0; x < count - 1; x++) {
+                for (int y = x + 1; y < count; y++) {
+                    if (strcmp(diretores[x], diretores[y]) > 0) {
+                        char *temp = diretores[x];
+                        diretores[x] = diretores[y];
+                        diretores[y] = temp;
+                    }
                 }
-            } else {
-                char *end = strpbrk(start, ",\n");
-                if (end) {
-                    *end = '\0';
-                    tokens[token_count++] = start;
-                    start = end + 1;
-                } else {
-                    tokens[token_count++] = start;
-                    break;
+            }
+
+            // Concatena os diretores ordenados em uma única string
+            tmp[0] = '\0';
+            for (int x = 0; x < count; x++) {
+                strcat(tmp, diretores[x]);
+                if (x < count - 1) {
+                    strcat(tmp, ",");
                 }
             }
-            if (*start == ',') start++;
+
+            strcpy(lista[total].director, tmp);
         }
-
-        // Lê os campos básicos
-        if (token_count > 0) strcpy(lista[total].show_id, tokens[0]);
-        if (token_count > 1) strcpy(lista[total].type, tokens[1]);
-        if (token_count > 2) strcpy(lista[total].title, tokens[2]);
-        if (token_count > 3) strcpy(lista[total].director, tokens[3]);
-
-        // Processa o elenco
-        if (token_count > 4 && tokens[4][0] != '\0') {
-            lista[total].cast_count = 0;
-            lista[total].cast = malloc(sizeof(char *) * 50);
-            if (!lista[total].cast) {
-                perror("Erro ao alocar memória para elenco");
-                exit(EXIT_FAILURE);
-            }
-            char *cast_token = strtok(tokens[4], ",");
-            while (cast_token) {
-                lista[total].cast[lista[total].cast_count] = strdup(cast_token);
-                lista[total].cast_count++;
-                cast_token = strtok(NULL, ",");
-            }
-        } else {
-            lista[total].cast_count = 0;
-            lista[total].cast = NULL;
+        else{
+            sscanf(line + i, "%[^,],", lista[total].director);
+            i += strlen(lista[total].director) + 1;
         }
-
-        if (token_count > 5) strcpy(lista[total].country, tokens[5]);
-
-        // Lê a data
-        if (token_count > 6) sscanf(tokens[6], "%d/%d/%d", &lista[total].time[0], &lista[total].time[1], &lista[total].time[2]);
-
-        if (token_count > 7) lista[total].release_year = atoi(tokens[7]);
-        if (token_count > 8) strcpy(lista[total].rating, tokens[8]);
-        if (token_count > 9) strcpy(lista[total].duration, tokens[9]);
-
-        // Processa as categorias
-        if (token_count > 10 && tokens[10][0] != '\0') {
-            lista[total].listed_in_count = 0;
-            lista[total].listed_in = malloc(sizeof(char *) * 50);
-            if (!lista[total].listed_in) {
-                perror("Erro ao alocar memória para categorias");
-                exit(EXIT_FAILURE);
-            }
-            char *category_token = strtok(tokens[10], ",");
-            while (category_token) {
-                lista[total].listed_in[lista[total].listed_in_count] = strdup(category_token);
-                lista[total].listed_in_count++;
-                category_token = strtok(NULL, ",");
-            }
-        } else {
-            lista[total].listed_in_count = 0;
-            lista[total].listed_in = NULL;
-        }
-
-        total++;
+        
+        
+        
     }
-    fclose(file);
+    
 }
-void imprimir_dados() {
+
+void imprimir(){
     for (int i = 0; i < total; i++) {
-        printf("[=> %s ## ", lista[i].show_id); // Imprime o ID do show
-        printf("%s ## ", lista[i].type); // Imprime o tipo do show
-        printf("%s ## ", lista[i].title); // Imprime o título do show
-        printf("%s ## ", (strlen(lista[i].director) == 0 ? "NaN" : lista[i].director)); // Imprime o diretor ou "NaN" se vazio
-        printf("[");
+        printf("ID: %s\n", lista[i].show_id);
+        printf("Tipo: %s\n", lista[i].type);
+        printf("Título: %s\n", lista[i].title);
+        printf("Diretor: %s\n", lista[i].director);
+        printf("Elenco: ");
         for (int j = 0; j < lista[i].cast_count; j++) {
-            printf("%s%s", lista[i].cast[j], (j < lista[i].cast_count - 1) ? ", " : ""); // Imprime o elenco
+            printf("%s ", lista[i].cast[j]);
         }
-        printf("] ## ");
-        printf("%s ## ", (strlen(lista[i].country) == 0 ? "NaN" : lista[i].country)); // Imprime o país ou "NaN" se vazio
-        if (lista[i].time[0] == 0 && lista[i].time[1] == 0 && lista[i].time[2] == 0) {
-            printf("NaN ## "); // Imprime "NaN" se a data for inválida
-        } else {
-            printf("%02d/%02d/%04d ## ", lista[i].time[0], lista[i].time[1], lista[i].time[2]); // Imprime a data
-        }
-        printf("%d ## ", lista[i].release_year); // Imprime o ano de lançamento
-        printf("%s ## ", (strlen(lista[i].rating) == 0 ? "NaN" : lista[i].rating)); // Imprime a classificação indicativa ou "NaN" se vazio
-        printf("%s ## ", lista[i].duration); // Imprime a duração
-        printf("[");
+        printf("\nPaís: %s\n", lista[i].country);
+        printf("Data de lançamento: %02d/%02d/%04d\n", lista[i].time[0], lista[i].time[1], lista[i].time[2]);
+        printf("Ano de lançamento: %d\n", lista[i].release_year);
+        printf("Classificação: %s\n", lista[i].rating);
+        printf("Duração: %s\n", lista[i].duration);
+        printf("Gêneros: ");
         for (int j = 0; j < lista[i].listed_in_count; j++) {
-            printf("%s%s", lista[i].listed_in[j], (j < lista[i].listed_in_count - 1) ? ", " : ""); // Imprime os gêneros
+            printf("%s ", lista[i].listed_in[j]);
         }
-        printf("]\n");
+        printf("\n");
     }
+        printf("Total de shows: %d\n", total);
 }
+
 
 int main() {
-    printf("Lendo dados do arquivo...\n");
-    ler_csv("disneyplus.csv");
-    printf("Dados lidos com sucesso!\n\n");
-    imprimir_dados();
-    printf("Total de filmes lidos: %d\n", total);
-
-    // Libera a memória alocada
-    for (int i = 0; i < total; i++) {
-        for (int j = 0; j < lista[i].cast_count; j++) {
-            free(lista[i].cast[j]);
+    
+    FILE *file = fopen("disneyplus.csv", "r");
+    char id[10];
+char line[1000];
+fgets(line, sizeof(line), file); // Skip the header line
+while (fgets(id, sizeof(id), stdin) != NULL) {
+    id[strcspn(id, "\n")] = '\0'; // Remove newline character from input
+    rewind(file); // Reset file pointer to the beginning
+    fgets(line, sizeof(line), file); // Skip the header line again
+    while (fgets(line, sizeof(line), file) != NULL) {
+        if (strncmp(line, id, strlen(id)) == 0) { // Check if the ID matches the start of the line
+            ler_csv(line); // Process the line
+            break;
         }
-        free(lista[i].cast);
-        for (int j = 0; j < lista[i].listed_in_count; j++) {
-            free(lista[i].listed_in[j]);
-        }
-        free(lista[i].listed_in);
     }
-    return 0;
+
+}
+   
 }
