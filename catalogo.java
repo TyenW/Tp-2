@@ -328,76 +328,85 @@ class catalogo {
             }
         }
     }
+    
 
-    // Heapsort recursivo (chave primária: Diretor, chave de desempate: Título)
-    // Os itens sem diretor serão comparados como "NaN" e ordenados alfabeticamente no final
-    public static Disney[] ordenacaoHeap(Disney[] arrayDisney) {
-        int tamanhoArray = arrayDisney.length;
+    public static void mergeSort(List<Disney> vetor, int esq, int dir, int[] stats) {
+        if (esq < dir) {
+            int meio = (esq + dir) / 2;
+            mergeSort(vetor, esq, meio, stats);
+            mergeSort(vetor, meio + 1, dir, stats);
 
-        // Constrói o heap (reorganiza o array)
-        for (int i = tamanhoArray / 2 - 1; i >= 0; i--) {
-            arrayDisney = reorganizarHeap(arrayDisney, tamanhoArray, i);
+            // Intercalação
+            int nEsq = meio - esq + 1;
+            int nDir = dir - meio;
+
+            List<Disney> arrayEsq = new ArrayList<>();
+            List<Disney> arrayDir = new ArrayList<>();
+
+            for (int i = 0; i < nEsq; i++) {
+                arrayEsq.add(vetor.get(esq + i));
+            }
+
+            for (int j = 0; j < nDir; j++) {
+                arrayDir.add(vetor.get(meio + 1 + j));
+            }
+
+            int iEsq = 0, iDir = 0;
+            int k = esq;
+
+            while (iEsq < nEsq && iDir < nDir) {
+                stats[0]++; // Incrementa comparações
+                matricula.incrementarComparacoes(); // Incrementa comparações na matrícula
+                Disney left = arrayEsq.get(iEsq);
+                Disney right = arrayDir.get(iDir);
+
+                int comp = compare(left, right);
+
+                if (comp <= 0) {
+                    vetor.set(k, left);
+                    iEsq++;
+                } else {
+                    vetor.set(k, right);
+                    iDir++;
+                }
+                stats[1]++; // Incrementa movimentações
+                k++;
+            }
+
+            while (iEsq < nEsq) {
+                vetor.set(k++, arrayEsq.get(iEsq++));
+                stats[1]++; // Incrementa movimentações
+            }
+
+            while (iDir < nDir) {
+                vetor.set(k++, arrayDir.get(iDir++));
+                stats[1]++; // Incrementa movimentações
+            }
         }
-
-        // Extrai elementos do heap um por um
-        for (int i = tamanhoArray - 1; i > 0; i--) {
-            // Move a raiz atual para o final
-            arrayDisney = trocar(arrayDisney, 0, i);
-
-            // Chama reorganizarHeap na heap reduzida
-            arrayDisney = reorganizarHeap(arrayDisney, i, 0);
-        }
-
-        return arrayDisney; // Retorna o array ordenado
     }
-
-    // Reorganiza o heap em torno de um nó específico
-    private static Disney[] reorganizarHeap(Disney[] arrayDisney, int tamanhoHeap, int indiceRaiz) {
-        int maiorIndice = indiceRaiz; // Inicializa o maior como raiz
-        int indiceFilhoEsquerdo = 2 * indiceRaiz + 1; // Índice do filho esquerdo
-        int indiceFilhoDireito = 2 * indiceRaiz + 2; // Índice do filho direito
-
-        // Verifica se o filho esquerdo é maior que a raiz
-        if (indiceFilhoEsquerdo < tamanhoHeap && comparar(arrayDisney[indiceFilhoEsquerdo], arrayDisney[maiorIndice]) > 0) {
-            maiorIndice = indiceFilhoEsquerdo;
+    
+    private static int compare(Disney a, Disney b) {
+        // Comparar por duration (convertido de String para int)
+        int compDuration = compareDuration(a.getDuration(), b.getDuration());
+        if (compDuration != 0) {
+            return compDuration;
         }
-
-        // Verifica se o filho direito é maior que o maior até agora
-        if (indiceFilhoDireito < tamanhoHeap && comparar(arrayDisney[indiceFilhoDireito], arrayDisney[maiorIndice]) > 0) {
-            maiorIndice = indiceFilhoDireito;
+    
+        // Desempate por title
+        return a.getTitle().compareToIgnoreCase(b.getTitle());
+    }
+    
+    private static int compareDuration(String durationA, String durationB) {
+        try {
+            int durationAInt = Integer.parseInt(durationA);
+            int durationBInt = Integer.parseInt(durationB);
+            return Integer.compare(durationAInt, durationBInt);
+        } catch (NumberFormatException e) {
+            // Em caso de erro de conversão, considerar como 0 (ou outro valor padrão)
+            return durationA.compareTo(durationB);
         }
-
-        // Se o maior não for a raiz, realiza a troca
-        if (maiorIndice != indiceRaiz) {
-            arrayDisney = trocar(arrayDisney, indiceRaiz, maiorIndice);
-
-            // Recursivamente reorganiza a subárvore afetada
-            arrayDisney = reorganizarHeap(arrayDisney, tamanhoHeap, maiorIndice);
-        }
-
-        return arrayDisney;
     }
-
-    // Método para trocar dois elementos no array
-    private static Disney[] trocar(Disney[] arrayDisney, int i, int j) {
-        Disney temp = arrayDisney[i];
-        arrayDisney[i] = arrayDisney[j];
-        arrayDisney[j] = temp;
-        return arrayDisney;
-    }
-
-    // Método de comparação para o Heapsort
-    private static int comparar(Disney disney1, Disney disney2) {
-        String diretor1 = disney1.getDirector().isEmpty() ? "NaN" : disney1.getDirector();
-        String diretor2 = disney2.getDirector().isEmpty() ? "NaN" : disney2.getDirector();
-
-        // Caso 1: Ambos têm diretor (ou "NaN") → ordena por diretor, depois título
-        int cmpDiretor = diretor1.compareToIgnoreCase(diretor2);
-        if (cmpDiretor != 0) return cmpDiretor;
-
-        // Caso 2: Ordena por título como critério de desempate
-        return disney1.getTitle().compareToIgnoreCase(disney2.getTitle());
-    }
+<<<<<<< HEAD
 
 
     // Método para ordenar o array de objetos Disney por release_year usando Counting Sort
@@ -626,6 +635,9 @@ class catalogo {
         return date1.compareTo(date2);
     }
 
+=======
+    
+>>>>>>> 27d0b4c31507183e0551229b28d63969222b7bff
     // Método principal
     public static void main(String[] args) throws Exception {
         // Inicializa os métodos
@@ -674,7 +686,12 @@ class catalogo {
         //inicia o cronometro 
         long tempoInicial = System.nanoTime(); // Marca o tempo inicial
         // Ordena o array de objetos Disney por ID
+<<<<<<< HEAD
        disney = quicksortTop10(disney);// Ordena o array por ano de lançamento
+=======
+        int[] stats = new int[2]; // Array para armazenar comparações e movimentações
+        mergeSort(Arrays.asList(disney), 0, disney.length - 1, stats); // Converte o array para uma lista e chama o método MergeSort
+>>>>>>> 27d0b4c31507183e0551229b28d63969222b7bff
         long tempoFinal = System.nanoTime(); // Marca o tempo final
         tempoconjunto += (tempoFinal - tempoInicial); // Calcula o tempo total
 
