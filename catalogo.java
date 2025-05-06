@@ -398,6 +398,234 @@ class catalogo {
         // Caso 2: Ordena por título como critério de desempate
         return disney1.getTitle().compareToIgnoreCase(disney2.getTitle());
     }
+
+
+    // Método para ordenar o array de objetos Disney por release_year usando Counting Sort
+    public static Disney[] countingSortPorAno(Disney[] disney) {
+        // Determina o menor e o maior ano de lançamento
+        int menorAno = Integer.MAX_VALUE;
+        int maiorAno = Integer.MIN_VALUE;
+
+        for (Disney d : disney) {
+            if (d.getRelease_year() < menorAno) {
+                menorAno = d.getRelease_year();
+            }
+            if (d.getRelease_year() > maiorAno) {
+                maiorAno = d.getRelease_year();
+            }
+        }
+
+        // Cria o array de contagem
+        int range = maiorAno - menorAno + 1;
+        int[] count = new int[range];
+        Arrays.fill(count, 0);
+
+        // Conta a frequência de cada ano de lançamento
+        for (Disney d : disney) {
+            count[d.getRelease_year() - menorAno]++;
+        }
+
+        // Calcula os índices acumulados
+        for (int i = 1; i < count.length; i++) {
+            count[i] += count[i - 1];
+        }
+
+        // Cria o array de saída
+        Disney[] sortedDisney = new Disney[disney.length];
+
+        // Ordena os objetos Disney por release_year
+        for (int i = disney.length - 1; i >= 0; i--) {
+            int pos = count[disney[i].getRelease_year() - menorAno] - 1;
+            sortedDisney[pos] = disney[i];
+            count[disney[i].getRelease_year() - menorAno]--;
+        }
+
+        // Resolve o critério de desempate (title) usando Arrays.sort
+        int start = 0;
+        while (start < sortedDisney.length) {
+            int end = start;
+            while (end < sortedDisney.length && sortedDisney[start].getRelease_year() == sortedDisney[end].getRelease_year()) {
+                end++;
+            }
+            Arrays.sort(sortedDisney, start, end, Comparator.comparing(Disney::getTitle, String.CASE_INSENSITIVE_ORDER));
+            start = end;
+        }
+
+        return sortedDisney;
+    }
+    // Método para ordenar o array de objetos Disney por duração usando MergeSort
+    public static Disney[] mergeSortPorDuracao(Disney[] disney) {
+        if (disney.length <= 1) {
+            return disney;
+        }
+
+        int meio = disney.length / 2;
+
+        // Divide o array em duas metades
+        Disney[] esquerda = Arrays.copyOfRange(disney, 0, meio);
+        Disney[] direita = Arrays.copyOfRange(disney, meio, disney.length);
+
+        // Ordena recursivamente as duas metades
+        esquerda = mergeSortPorDuracao(esquerda);
+        direita = mergeSortPorDuracao(direita);
+
+        // Combina as duas metades ordenadas
+        return merge(esquerda, direita);
+    }
+
+    // Método para combinar dois arrays ordenados
+    private static Disney[] merge(Disney[] esquerda, Disney[] direita) {
+        Disney[] resultado = new Disney[esquerda.length + direita.length];
+        int i = 0, j = 0, k = 0;
+
+        while (i < esquerda.length && j < direita.length) {
+            // Compara a duração
+            int comparacaoDuracao = compararDuracao(esquerda[i].getDuration(), direita[j].getDuration());
+            if (comparacaoDuracao < 0 || (comparacaoDuracao == 0 && esquerda[i].getTitle().compareToIgnoreCase(direita[j].getTitle()) <= 0)) {
+                resultado[k++] = esquerda[i++];
+            } else {
+                resultado[k++] = direita[j++];
+            }
+        }
+
+        // Copia os elementos restantes da metade esquerda, se houver
+        while (i < esquerda.length) {
+            resultado[k++] = esquerda[i++];
+        }
+
+        // Copia os elementos restantes da metade direita, se houver
+        while (j < direita.length) {
+            resultado[k++] = direita[j++];
+        }
+
+        return resultado;
+    }
+
+    // Método para comparar a duração (considera "NaN" como maior valor)
+    private static int compararDuracao(String duracao1, String duracao2) {
+        if (duracao1 == null || duracao1.isEmpty()) {
+            duracao1 = "NaN";
+        }
+        if (duracao2 == null || duracao2.isEmpty()) {
+            duracao2 = "NaN";
+        }
+
+        // Se ambos forem "NaN", considera iguais
+        if (duracao1.equals("NaN") && duracao2.equals("NaN")) {
+            return 0;
+        }
+
+        // Se apenas um for "NaN", considera o outro menor
+        if (duracao1.equals("NaN")) {
+            return 1;
+        }
+        if (duracao2.equals("NaN")) {
+            return -1;
+        }
+
+        // Extrai os números das durações (assume que estão no formato "X min" ou "X Season(s)")
+        int valor1 = extrairValorDuracao(duracao1);
+        int valor2 = extrairValorDuracao(duracao2);
+
+        return Integer.compare(valor1, valor2);
+    }
+
+    // Método para extrair o valor numérico da duração
+    private static int extrairValorDuracao(String duracao) {
+        String[] partes = duracao.split(" ");
+        try {
+            if (partes[1].toLowerCase().contains("season")) {
+                return Integer.parseInt(partes[0]) * 60; // Converte temporadas para minutos (1 temporada = 60 minutos)
+            } else {
+                return Integer.parseInt(partes[0]); // Retorna os minutos diretamente
+            }
+        } catch (Exception e) {
+            return Integer.MAX_VALUE; // Retorna um valor alto para durações inválidas
+        }
+    }
+
+    // Método para ordenar o array de objetos Disney por seleção e retornar os 10 primeiros elementos
+    public static Disney[] selecaoTop10(Disney[] disney) {
+        int n = disney.length;
+
+        // Realiza a ordenação por seleção em ordem alfabética
+        for (int i = 0; i < Math.min(10, n); i++) {
+            int menorIndice = i;
+            for (int j = i + 1; j < n; j++) {
+                // Compara os elementos pelo título em ordem alfabética
+                if (disney[j].getTitle().compareToIgnoreCase(disney[menorIndice].getTitle()) < 0) {
+                    menorIndice = j;
+                }
+            }
+
+            // Troca os elementos, colocando o menor no início
+            Disney temp = disney[i];
+            disney[i] = disney[menorIndice];
+            disney[menorIndice] = temp;
+        }
+
+        // Retorna apenas os 10 primeiros elementos em ordem alfabética
+        return Arrays.copyOfRange(disney, 0, Math.min(10, n));
+    }
+
+    // Método para ordenar o array de objetos Disney por Quicksort com chave date_added e critério de desempate title, retornando apenas o top 10
+    public static Disney[] quicksortTop10(Disney[] disney) {
+        quicksort(disney, 0, disney.length - 1);
+
+        // Retorna apenas os 10 primeiros elementos
+        return Arrays.copyOfRange(disney, 0, Math.min(10, disney.length));
+    }
+
+    // Método Quicksort
+    private static void quicksort(Disney[] array, int low, int high) {
+        if (low < high) {
+            int pi = partition(array, low, high);
+
+            // Ordena recursivamente as subpartes
+            quicksort(array, low, pi - 1);
+            quicksort(array, pi + 1, high);
+        }
+    }
+
+    // Método para particionar o array
+    private static int partition(Disney[] array, int low, int high) {
+        Disney pivot = array[high]; // Pivô
+        int i = low - 1; // Índice do menor elemento
+
+        for (int j = low; j < high; j++) {
+            // Compara os elementos pela data adicionada
+            int dateComparison = compareDates(array[j].getDate_added(), pivot.getDate_added());
+            if (dateComparison < 0 || (dateComparison == 0 && array[j].getTitle().compareToIgnoreCase(pivot.getTitle()) < 0)) {
+                i++;
+                // Troca os elementos
+                Disney temp = array[i];
+                array[i] = array[j];
+                array[j] = temp;
+            }
+        }
+
+        // Troca o pivô com o elemento na posição correta
+        Disney temp = array[i + 1];
+        array[i + 1] = array[high];
+        array[high] = temp;
+
+        return i + 1; // Retorna o índice do pivô
+    }
+
+    // Método para comparar duas datas (considera null como menor valor)
+    private static int compareDates(Date date1, Date date2) {
+        if (date1 == null && date2 == null) {
+            return 0;
+        }
+        if (date1 == null) {
+            return -1;
+        }
+        if (date2 == null) {
+            return 1;
+        }
+        return date1.compareTo(date2);
+    }
+
     // Método principal
     public static void main(String[] args) throws Exception {
         // Inicializa os métodos
@@ -446,7 +674,7 @@ class catalogo {
         //inicia o cronometro 
         long tempoInicial = System.nanoTime(); // Marca o tempo inicial
         // Ordena o array de objetos Disney por ID
-        disney = ordenacaoHeap(disney); // Chama o método de ordenação Heapsort
+       disney = quicksortTop10(disney);// Ordena o array por ano de lançamento
         long tempoFinal = System.nanoTime(); // Marca o tempo final
         tempoconjunto += (tempoFinal - tempoInicial); // Calcula o tempo total
 
@@ -474,7 +702,7 @@ class matriculasequencial {
 
     public void geraraqruivolog(matriculasequencial i){
         // Método para gerar o arquivo de log
-        try (BufferedWriter writer = new BufferedWriter(new FileWriter("./804517_heapsort.txt", true))) {
+        try (BufferedWriter writer = new BufferedWriter(new FileWriter("./804517_quicksortparcial.txt", true))) {
             writer.write(matricula + "\t");
             writer.write(i.getComparacoes() + "\t");
             writer.write(String.valueOf(i.getTempoTotal()));
