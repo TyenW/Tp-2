@@ -1,4 +1,5 @@
 #define _XOPEN_SOURCE 700   // Deve ser a PRIMEIRA linha
+#define _POSIX_C_SOURCE 199309L
 
 /* Includes */
 #include <stdio.h>
