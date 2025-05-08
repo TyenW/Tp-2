@@ -406,7 +406,7 @@ class catalogo {
             return durationA.compareTo(durationB);
         }
     }
-<<<<<<< HEAD
+
 
 
     // Método para ordenar o array de objetos Disney por release_year usando Counting Sort
@@ -635,9 +635,6 @@ class catalogo {
         return date1.compareTo(date2);
     }
 
-=======
-    
->>>>>>> 27d0b4c31507183e0551229b28d63969222b7bff
     // Método principal
     public static void main(String[] args) throws Exception {
         // Inicializa os métodos
